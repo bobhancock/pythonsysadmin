@@ -1,0 +1,207 @@
+Overview
+These are all based on Python 2.7.2.  Feel free to use any import, third party libraries or backports that will help you solve the problem.
+
+The example section of each problem is shows expected input and output..  The solution output section, if it exists, is the actual answer for the provided data.
+
+Description of File Data
+Each problem will have a text file that provides the input.  The file naming convention is level_problemnumber.txt.
+
+Fields are separated by pipe symbols.  Strings are delimited by quotes it is a string.  If it is delimited by parentheses, it is a tuple.
+Delimited by brackets it is a list.  Delimited by braces, it is a dictionary.
+
+Example:
+1,2,[“bob”, “peter”], (“bob”, “peter”), 32.093
+
+This record consists of:
+integer, integer, list of strings, tuple of strings, float
+
+The file names are level_problemnumber.data.  The file for the the first problem in level 1 is 1_1.data.
+
+Level 1
+------------
+Problem 1
+Write a procedure to determine if the members in a record are distinct/unique.  Read each record in the file and print the record number and True or False to standard out.
+
+Example
+Input
+a|b|c
+g|h|g
+Output
+1 True 
+2 False
+
+Solution Output
+1 True
+2 False
+3 False
+4 True
+5 False
+
+
+Problem 2
+Given a sequence of stock prices in a record,  pick the best best time to buy and then sell.  Each record in the file represents a different stock.  Calculate the profit for each stock and then the total profit.  If it is not possible to make a profit, minimize the loss.
+Input
+The first line of input gives the number of stocks you can use, N. For each stock, the record consists of a series of numbers representing prices throughout the day.  Note, that the number of price quotes per stock can vary.
+
+Output
+For each stock output: buy_price sell_price profit separated by spaces on a separate line.
+The last last output line: TOTAL PROFIT = total_profit
+
+2 3 1
+99 102 3
+110 109 -1   
+TOTAL PROFIT = 3
+Solution Output
+Input   Output
+2
+3,4,1,6,2       1 6 5
+200,200,198,199.5,199.98,199.72,199.71  198 199.98 1.98
+3,6,9,1,6,8.32  1 8.32 7.32
+TOTAL PROFIT: 14.3
+
+
+
+Problem 3
+Create a procedure that returns True or False telling you whether a value is a power of 2.
+
+Example
+Input 
+64
+99
+
+Output
+1 True
+2 False
+Solution Output
+1 True
+2 True
+3 False
+4 True
+5 False
+
+Problem 4
+Rotate the string “abcdefghi” four characters to the left.
+Solution Output
+efghiabcd
+
+Problem 5
+Write a procedure to print to stdout a listing of all the operations, including double underscore operations, that can be used with a list but not a tuple.  For example, pop can be used with a list but not with a tuple.
+
+Problem 6
+Find the largest prime factor of (maximum integer allowed by Python / 1000).
+
+Example
+If the input were 21, the output would be 7.
+Problem 7
+Write a procedure that returns True or False that tells you if a record begins with the name of the day of the week.  Do this without using if:else.
+
+Example
+Input
+I hate Mondays.
+Saturday is my favorite day.
+Output
+1 False
+2 True
+Solution Output
+1 True
+2 False
+3 False
+4 True
+5 False
+
+Given an integer, find the next largest integer that uses the same digits.
+
+Example
+
+If the number is 15432, you should return 21345.
+
+
+Problem 9
+In a sequence, insert a sub-sequence.  Given the input below, insert the numbers between 20 and 40 so that it looks like the output.  Do this without using iteration
+
+Input
+ [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+ Output
+ [0, 10, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 50, 60, 70, 80, 90]
+
+ Problem 10
+ Given a set of words, find all all the anagrams for each word.
+
+ Input
+ tulsa
+ stop
+ dictionary
+ intoxicate
+ listen
+ beta
+
+ Output
+ original_word anagram1 anagram2 …
+
+ alert alter later
+
+
+ Problem 11
+ Write a procedure to reverse the words in each record; do this is one line of code.  Print the results to stdout separated by spaces.
+
+ Example
+ Input
+ Bob,Peter,Igor,Guido,Joachim
+
+ Output
+ Joachim Guido Igor Peter Bob
+
+
+ From a file of unsorted integers, retrieve the three smallest integers without using sort().
+
+ Output
+ Three smallest integers.
+
+ Solution Output
+ 100 101 103
+ Problem 13
+ Write a procedure that returns True or False that tells you if the last word of text in a record is a member of tuple of words.  For this problem used days of the week as the end words.  Do this without using if:else.
+
+ Input 
+ 1_13.data
+
+ end_words = ("Sunday", "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday")
+
+        Example
+        Input
+        I hate Mondays
+        Saturday is my favorite day
+        Output
+        1 True
+        2 False
+        Solution Output
+        1 True
+        2 False
+        3 False
+        4 True
+        5 False
+
+ Problem 14
+Write a procedure that returns True or False to verify whether a string represents a valid rational number limited to decimal representation.  
+
+        Example
+        3.14 True
+        ⅛ False
+        two False
+        3.5E9 True
+
+
+
+Problem 15
+Given a list of integers, write a procedure to print each number to stdout, starting at index 0, until you encounter the first odd number.  Do this without referencing the list directly in a for loop.  e.g.
+
+        for i in my_list:
+                if it is even print_it
+                 else stop
+
+       Input
+        [2,4,8,10,12,14,16,18,19,20,22,24]
+
+
+

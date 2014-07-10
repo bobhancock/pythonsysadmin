@@ -1,0 +1,144 @@
+This is the README file for the delete files program.
+
+Overview
+--------
+usage: python ./delfiles.py [DdF] config_file log_file
+
+From a list of specified base directories, traverse the trees and delete any files and 
+directories that are older than n days, where n is an integer supplied in the
+configuration file.  Even if a directory is eligible for
+deletion, if it contains files (see below for details of exclusion and static)
+it is not deleted and a WARNING log record is written.
+
+Files and directories can be excluded from consideration by listing them in
+in separate files that correspond to each of the three command line options
+
+D - File listing directories to exclude.  Do not interrorgate this directory or anything below it.
+
+d - File listing static directories.  If this directory is empty, do not delete it even if 
+    it meets the aging requirements.  You can however delete anything below it.
+
+F - File listing files to exclude.  Do not interrogate this file for aging, just skip it.
+
+All directories and files must be full path names.
+
+You can mark directories as static so that they are never deleted.
+The most typical example of this is for a directory that can be empty but
+must remain on the disk.  For example, if /foo is marked as static, and its
+contents are eligible for deletion, the contents are deleted but the 
+directory is untouched.  
+
+Directories in the exclusion file are completely excluded from the interrogation 
+process.  This includes any of its children.  So, even if a sub-directory has a 
+file eligible for deletion, if will never be considered since the process does
+not go beyond the level of the specified directory.
+
+This program uses a combination of multiprocessing and threading.  A process is a
+UNIX level process and is assigned to a single CPU.  Threads operate within a
+single process and perform cooperative multi-tasking.
+
+A consumer producer model is used where the consumer is a process that deletes a
+file or directory and the producer is a procedure that collects files/directories 
+that meet the criteria for deleteion and places them on a joinable queue that is 
+thread and process safe.  The collection procedure is threaded within the main 
+process and the deletion processes are assigned to individual CPUs.
+
+Example
+-----------------
+You have the directory structure /local/data/productx/
+                                                     /cusip
+                                                           /archive
+                                                     /nocusip
+                                                 
+and you want to delete all eligible files under productx but you want
+to leave the two subdirectories.
+
+1.  Create a file called staticdirs in the etc directory.  Inside the file you
+    put:
+        local/data/productx/cusip
+        local/data/productx/nocusip
+    
+2.  In the configuration file (e.g., etc/productx.conf) you sepcify:
+    base=local/data/productx
+    
+3.  On the command line use the -d otpion to specify the staticdirs file.
+    ../python ./delfiles -d etc/staticdirs etc/productx.conf log/productx.log
+    
+Starting at /local/data/productx/, the base, the application will find all files
+and directories over n days old and place them on a queue for deletion.  When
+processing the queue, before deleting a file or directory, it will check to see if
+it is listed in one of the files specified via the command line options.   In 
+this case, the directories ../cusip and ../nocusip will not be deleted even if
+they are eligible since they are in the staticdirs file.  However, any eligible 
+files within those directories will be deleted.  Note, that if eligible,
+../cusip/archive will be deleted since it is not in the staticdirs file.
+
+Let's say that instead you used -D option.
+    ../python ./delfiles -D etc/staticdirs etc/productx.conf log/productx.log
+    
+Now, the two directories and all of their children will be excluded from
+eligibility.  In fact, the application will not even look at the contents of
+these directories.  Only files directly under ../productx will be eligible
+for deletion.
+                                                 
+
+Files
+---------
+delfiles.py
+    The code file.  It traverses a given directory structure and deletes
+    all files older than n days.
+    
+delfiles.conf
+    [dir]
+    # The directories from which to start searching.
+    # You can specify multiple base directories in a colon separated string
+    # like the UNIX search path.
+    base=the directories from which to start the traversal
+
+    [age]
+    # Files older than this will be deleted.
+    in_days=integer
+    
+    [cpus]
+    # How many CPUs to allocate.  If the number exceeds the actual number
+    # of CPUs on the system, an error is raised and the program terminates.
+    # If this is setto zero, CPUs to be allocated.
+    allocated=16
+
+settings.py
+    # Path to the python module packages.
+    # This is inserted into the search path at the start of delfiles.py.  This can 
+    # be any location readable by the user running the program.
+    PACKAGE_PATH='/local/src/pypackages/trunk'
+    
+    # Activate debug logging.  When True verbose debugging is written to the log.
+    # When False, only CRITICAL, ERROR, WARNING, and INFO records are written.  
+    # N.B. Value can only be True or False and are case sensitive.
+    DEBUG=False
+    
+    # Perform a dry run where records of deletions are written to the log, but
+    # the files and directories are not deleted.
+    # N.B. Value can only be True or False and are case sensitive.
+    DRY_RUN=False
+
+Modifications
+    Version 1.1.0f
+    -   Expanded README with examples.
+    
+    Version 1.1.0e
+    -   Cleaned up static dirs file.
+    
+    Version 1.1.0d
+    -   settings creates log dir.
+    
+    Version 1.1.0c
+    -   Removed extraneous etc files and normalized naming.
+    
+    Version 1.1.0b
+    -   Added -V to print version
+    
+    Version 1.1.0a
+    -   Fixed format statements.
+    
+TODO
+-   Add a multiprocessing log? 

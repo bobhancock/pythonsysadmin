@@ -1,0 +1,260 @@
+"""
+Retrieve contents of URIs and write to file.  This is the core of the
+RSS retreival process.  It called by either main_aggregator which is
+used for a once process (up to about 200 sites) retrieval or 
+manager_aggregator which forks multiple processes each with a
+single aggregator instance.
+
+This program uses Twisted deferreds to pull information from multiple
+sites under the control of one process.
+
+This will be run by a multiprocess manager, so each aggregator will
+run in a separate system processor, and ideally, a separate CPU.
+
+10/21/2008    Robert Hancock    Created program
+12/3/2008     Robert Hancock    Removed parsing
+                                Trap error of get_page
+"""
+
+import pdb
+from twisted.internet import reactor, protocol, defer
+from twisted.web import client
+import os
+import sys
+import base64
+import time
+from xml.sax.saxutils import escape
+
+from aggregator_settings import PACKAGE_PATH, escape_dict
+sys.path.insert(0, PACKAGE_PATH)
+import dry.logger 
+import dry.system 
+
+class FeederProtocol(object):
+    """ Protocol definition to retrieve URL data. """
+    def __init__(self):
+        self.parsed = 1
+        self.with_errors = 0
+        self.error_list = []
+        
+    def gotError(self, traceback, extra_args):
+        """ An Error as occurred, print traceback 
+        to stdout and go on.
+        """
+        print traceback, extra_args
+        self.with_errors += 1
+        self.error_list.append(extra_args)
+        print "="*20
+        print "Trying to go on..."
+   
+    def get_page(self, data, feed_rec, log, appconf):
+        """ Retreive data from URL and return a deferred."""
+        log.debug('Entered FeederProtocol.get_page()')
+        # args is the entry from the URL list file
+        #return client.getPage(args,timeout=TIMEOUT)
+        app_conf = appconf
+        site_protected = False
+        args = feed_rec
+        
+        proxy = app_conf['use_proxy']
+        if proxy:
+            proxyAuth = base64.encodestring('%s:%s' 
+                                            % (app_conf['proxy_username'],
+                                               app_conf['proxy_password']))
+            proxy_authHeader = "Basic " + proxyAuth.strip()
+    
+        url = args[0]
+        if len(args) == 4:
+            # [1] is description
+            username = args[2] # site username
+            password = args[3] # site password
+        else:
+            username = None
+            password = None
+            
+        url_timeout = int(app_conf['timeout'])
+        
+        # The target site is password protected. 
+        if username and password:
+            basicAuth = base64.encodestring('%s:%s' % (username, password))
+            authHeader = "Basic " + basicAuth.strip()
+            site_protected = True
+            
+        if proxy and site_protected:
+            return client.getPage(url, 
+                                  headers={"Authorization": authHeader, \
+                                           'Proxy-Authenticate': proxy_authHeader},
+                                  timeout=url_timeout)
+        elif not proxy and site_protected:
+            return client.getPage(url, headers={"Authorization": authHeader},
+                                  timeout=url_timeout)
+        elif proxy and not site_protected:
+            return client.getPage(url, headers={'Proxy-Authenticate': proxy_authHeader},
+                                  timeout=url_timeout)
+        else:
+            return client.getPage(url, timeout=url_timeout)
+    
+    def get_page_error(self, _failure, log, feed_name):
+        """ Failure while getting page.
+        Trapping the failure will cause the deferred chain to stop.
+        """
+        msg = 'While getting %s: %s' % (feed_name, _failure.getTraceback())
+        log.warning(msg)
+        log.debug('Before:  returnRuntimeError')
+        return RuntimeError
+    
+    def page_to_file(self, feeddata, args, logger, appconf):
+        """ Write unparsed feed content to a file. """
+        feed_data = feeddata
+        log = logger
+        app_conf = appconf
+        name = escape(args[0], escape_dict)
+        fnout_stub = os.path.join(app_conf['download_dir'], name)
+        fnout = '%s.%s' % (fnout_stub, time.time())
+        
+        try:
+            fout = open(fnout, 'w')
+        except IOError as e:
+            log.error('Opening %s: %s' % (fnout, e))
+            return
+                      
+        try:
+            fout.write(feed_data)
+            log.info('Wrote %s.' % fnout)
+        except IOError as e:
+            log.error('Wrting to %s: %s' % (fnout, e))
+        finally:
+            fout.close()    
+            
+    def stopWorking(self, data, log):
+        """ When all feeds are complete, shutdown the reactor."""
+        log.debug("Closing connection number %d..."%(self.parsed,))
+        #print "=-"*20
+        
+        self.parsed += 1
+        log.debug('self.parsed %d of %d' % (self.parsed, self.END_VALUE))
+        #print self.parsed,  self.END_VALUE
+        if self.parsed > self.END_VALUE:   #
+            log.debug('self.parsed(%s) > self.END_VALUE(%s)' 
+                      % (self.parsed, self.END_VALUE))
+            log.debug('Closing all connections')
+            
+            #print "Closing all..."         #
+            #for i in self.error_list:      #  Just for testing
+            #    print i                    #
+            #print len(self.error_list)     #
+            log.debug("Before: reactor.stop()")
+            self.parsed = 1
+            reactor.stop()                  
+            log.debug("After: reactor.stop()")
+
+    def printStatus(self, data=None):
+        pass
+        #print "Starting feed group..."
+            
+    def start(self, log, appconf, data=None, std_alone=True):
+        """ data is list of lists of feeds. """
+        log.debug('Entered FeederProtocol.start()')
+        app_conf = appconf
+        
+        d = defer.succeed(self.printStatus())
+        #self.main_process(d, log, app_conf, data)
+        for feed in data:
+            if len(feed) < 2:
+                log.warning('Feed entry must have at least url and description: %s' % feed)
+                continue
+            
+            sector = feed[1]
+                
+            ## Now we start telling the reactor that it has
+            ## to get all the feeds one by one...
+            ## go and get it from the web directly
+            d.addCallback(self.get_page, feed, log, app_conf)
+            d.addCallbacks(self.page_to_file, 
+                           self.get_page_error, 
+                           (feed, log, app_conf), None,
+                           (log, feed), None)
+            
+            ## And when the for loop is ended we put 
+            ## stopWorking on the callback for the last 
+            ## feed gathered
+            #if std_alone:
+            d.addCallback(self.stopWorking, log)
+            d.addErrback(self.gotError, (feed[0], 'while stopping'))
+        
+        ##if not std_alone:
+        #return d
+
+class FeederFactory(protocol.ClientFactory):
+    """ Twisted client factory. """
+    protocol = FeederProtocol()
+    
+    def __init__(self, feeds, logger, appconf, std_alone=False):
+        """ feeds is a list of lists.
+        [['url', 'description;, 'username', 'password'], ['url']]
+        It must have at lease url and description
+        """
+        self.log = logger
+        self.app_conf = appconf
+        #self.feeds = self.getFeeds()
+        self.feeds = feeds
+        self.std_alone = std_alone
+        self.protocol.factory = self
+        self.protocol.END_VALUE = len(self.feeds) # this is just for testing
+        
+
+        if std_alone:
+            self.start(self.feeds)
+
+    def start(self, addresses):
+        # Divide into groups all the feeds to download
+        self.log.debug("Before: if len(addresses) > app_conf['deferred_groups_max']:")
+        if len(addresses) > self.app_conf['deferred_groups_max']:
+            url_groups = [[] for x in xrange(self.app_conf['deferred_groups_max'])]
+            for i, addr in enumerate(addresses):
+                url_groups[i%self.app_conf['deferred_groups_max']].append(addr)
+        else:
+            url_groups = [[addr] for addr in addresses]
+         
+        self.log.debug("Before: for group in url_groups:")
+        for group in url_groups:
+            if not self.std_alone:
+                #return self.protocol.start(self.log, group, self.std_alone)
+                self.protocol.start(self.log, self.app_conf, group, self.std_alone)
+            else:
+                self.protocol.start(self.log, self.app_conf, group, self.std_alone)
+
+
+def go(aggregator_name, listfeeds, appconf,  
+                   logfile="/var/tmp/aggregator.log", debug=False):
+    """ main process to run aggregator
+    listfeeds - list of tuples
+    (url, description, username, password)
+    usernaname and password are only filled in if the targeted site is protected.
+    
+    appconf is a dictionary of configuration values.  It should be verified before
+    being passed in.
+    
+    aggregator_name - a string to uniquely identify this aggregator.  It might be the 
+    process number assigned by the manager.
+    """
+    feeds = listfeeds
+    app_conf = appconf
+    name = aggregator_name
+    filenameLog = logfile
+    
+    # setup logging
+    try:
+        debug = True if debug else False
+        log = dry.logger.setupLogging(filenameLog, name, debug)
+        log.info('Program started')
+    except Exception as e: 
+        sys.stderr.write('Caught exception in setupLogging: %s' % e)
+        return 1		
+
+    log.debug("Before: f = FeederFactory(log, app_conf, std_alone=True)")
+    f = FeederFactory(feeds, log, app_conf, std_alone=True)
+    log.debug("Before: reactor.run()")
+    reactor.run()    
+    log.debug("After: reactor.run()")
+    

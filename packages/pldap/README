@@ -1,0 +1,64 @@
+This is the README for the ldap connection objects.
+
+The python ldap library (http://www.python-ldap.org/) provides a low level 
+interface to access LDAP directory servers.  The results that are returned
+are frequently cryptic at best, so con.py provides the class LDAPSearchResult
+to reduce them usable python objects.
+
+The ConfiguredConnection class provides a connection to a specific server
+with with admin credentials to make changes.  Once the connection is 
+made, the class provides convenience methods that perform the most common 
+operations such as add_user, delete_user, get_user_groups, etc.  In addition,
+is provides unique uidnumbers and gidnumbers if required.  See con.py for 
+the current list of methods.
+
+Example
+------------
+import sys
+import settings
+sys.path.insert(0, settings.PACKAGE_PATH)
+import pldap.con
+
+try:
+     con = pldap.con.ConfiguredConnection(settings.server,
+                                          settings.admin_dn,
+                                          settings.admin_pwd,  
+                                          settings.root_dn,
+                                          settings.groups_dn,
+                                          settings.users_dn,
+                                          settings.homedir)
+ except Exception as e:
+     log.critical('ConfiguredConnection returned {ex}'.format(ex=e))
+     sys.exit(1)
+
+try:
+     con.add_user(uname, password, description="Test user")
+ except Exception as e:
+     log.error('{u}: adduser: {ex}'.format(u=uname, ex=e))
+     sys.exit(1)
+ 
+# This assumes that you have a command line option to specify a file with the 
+# entitlements to be applied to this user.
+if options.entitlementsfile:
+    for line in open(options.entitlementsfile, 'r'):
+        ent = line.strip('\n').strip('\r').strip()
+        try:
+            con.add_user_to_group(uname, ent)
+        except Exception as e:
+            log.error('{u}: adduser to group {gr}: {ex}'.format(u=uname, 
+                                                                gr=ent,ex=e))
+         
+Versions
+------------
+    1.3
+        -   Added one connection per thread when obtaining users groups.  This
+            reduces retreival time by 15%.
+            
+    1.2
+        Bug fixes
+        
+    1.1.3f
+        -   Added is_user() to modify_password
+        
+    1.1.2e
+       - Memoization of groups.

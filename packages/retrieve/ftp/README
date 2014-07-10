@@ -1,0 +1,122 @@
+This is the README for the ftp retrieval module.
+
+The FTP retrieval module connects to a remote server and only downloads file 
+that have not yet been downloaded based on the file name and mtime.  A journal
+of files already downloaded is kept in a SQLite database.
+
+Once it has looged into the remote host, it perfomrs a listdir() and parses the file name and mtime.  This combination forms a unique key, so, we query the database for this combination, and if the query returns null, we download the file.
+
+The calling program must provide a configuration file to create the appconf object
+
+
+Sample call
+--------------
+
+import retrieve.ftp.ftp
+
+retrieve.ftp.ftp.go(config_file, log_file, remotedir,  isdebug, isdaemon)
+    config_file -  the full path name of the configuration file
+    
+    log_file -     the full path file name of the log file.  It is created if it does
+                   not already exist.
+                   
+    remotdir -     The directory on the remote server to interrogate.
+    
+    isdebug -      True or False to indicate wheter DEBUG records should be written
+                   to the log file.
+                   
+    isdaemon -     True or False to indicate when the entire process should be
+                   run as a daemon.
+                   
+Configuration file
+---------------------
+[remote]
+    ftp_host
+        The target host URL or IP address.
+        
+    ftp_user
+        FTP username
+        
+    ftp_password
+        FTP password.
+        
+    ftp_remote_directory
+        Remote directory.  If blank it interrorgates whereever you are chrooted
+        on the remote host.
+    
+    ftp_duration_secs
+        Actually, not a timeout because of blocked IO, but the timeout for the
+        completion of the entire FTP download.
+    
+[local]
+    ftp_local_directory
+        Directoyr where the files are downloaded
+
+    sync_directory
+        Directory ehere the files are moved after they are completely downloaded.
+
+    journal_file_name
+        The SQLite file that stores the list of files already downloaded.
+        
+    journal_table_name
+        The SQLite table name.
+
+    
+    sleep_in_seconds=600
+        The number of seconds between checks of the FTP server
+
+    xml_encoding=utf-8
+        # The encoding for the downloaded files.  Not necessarily XML.
+    
+    [daemon]
+    daemon_log
+        Standard daemon log.
+        
+    daemon_error_log
+        Wehre stderr is redirected.
+        
+    daemon_pid
+        Daemon process id.
+
+[server]
+    server_port
+        The port on which the daemon listens for shutdown requests.
+        
+    server_shutdown_string
+        The string to send to the daemon to tell it to elegantly shutdwon.
+        
+    inter_heartbeat_secs
+        Number of seconds to wait betwee heartbeats.
+
+settings.py
+-------------
+    PACKAGE_PATH
+        The relative path to the top of pypackages.
+        
+
+
+Versions
+1.1.4
+        Added PSList to dry.system.  This is a class that abstracts the ps -ef 
+        functionality with multiple greps.  It allows you to search the ps list
+        and return entries that match your criteria.  This allows a program to
+        check whether a specific program is instantiated.
+        
+1.1.3   
+    -   Added _monitor_ftp_session() to Poller.  This is run in a thread and
+        enforces a timeout in seconds.  There was a problem when attempting to
+        retrieve files from the internal EDX mailbox where we would issue a
+        listdir() and the process would hang.  The maximum duration for an FTP
+        process is specified in the configuration file.  This thread checks
+        every 0.5 seconds to see if the process is complete or the duration has 
+        been exceeded.  If the duration is exceeded and the process is still 
+        active, this thread shutsdown the session unconditionally.
+        
+    -   The log now has a subordinate recored type of FILESDOWNLOADED.  The
+        record contains a list of tuple of local_file, remote file mtime
+        in epock seconds, remote file name.  This was added so that monitoring
+        would have keyword to look for to verify that a file has downloaded
+        by a certain time.
+        
+
+1.1.2   Added rotating logs by time with default of midnight.

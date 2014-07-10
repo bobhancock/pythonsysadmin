@@ -1,0 +1,10 @@
+This is the README file for the  configurable rsync.
+
+This daemon is run in the application layer and rsyncs data from the web layer.
+Normally, it will delete the data in the web layer if the rsysnc 
+is successful.  You can adjust this behavior in the rsycn_ boilerplate
+variable in the configuration file.
+
+Since this is an rsync, it assumes that the directory names on the remote
+and local hosts are the same and that the userid that runs this daemon has
+read/write access to both.

@@ -1,0 +1,49 @@
+# Example configuration file
+[program]
+# Since there can be a different configuration for each instance of
+# the rsync daemon, so the name of the configuration file should be
+# reflective of what your are syncing.
+# For example, if you pulling the LCD data from the web layer to the
+# app layer, you might call the file ../lcd_rsync_daemon.log
+
+log_file = /local/apps/rsync/rsync_audit.log
+
+# The port on which this daemon listens for shutdown requests
+server_port = 89666
+
+# The time, in seconds, between rsyncs
+inter_rsync_time =  30 
+
+# The time, in seconds, between rsyncs
+inter_heartbeat_time =  60 
+
+# this is poc2's admin interface
+remote_host =  151.108.66.65
+
+# The string sent to this daemon to tell it to die elegantly
+server_shutdown = dxDIENOW
+
+# The template string for the rsync command
+rsync_boilerplate = %s  -qae "ssh -qx -c arcfour -o Compression=no" --remove-source-files %s:%s %s
+
+# Location of the rsync binary
+#rsync_bin =  /usr/local/bin/rsync
+rsync_bin =  /usr/bin/rsync
+
+# Rsync log
+rsync_log = /local/apps/rsync/rsync.log
+
+# The application directory w
+#app_dir =  /local/apps/rdretrvl
+#script_dir =  /local/apps/rdretrvl/scripts
+
+# The remote directory to be rsynced.  The same directory must
+# exist on the localhost
+remote_dir =  /local/apps/rdretrvl/rdsync
+
+# The semaphore that tells rsync that there is an instance running
+lock_file =  /local/apps/rdretrvl/scripts/.poc2_rsync_lock
+
+daemon_log = /local/apps/rdretrvl/apps/rsycn_lcd_test/daemon.log
+daemon_error_log = /local/apps/rdretrvl/apps/rsycn_lcd_test/daemon_error.log
+daemon_pid = /local/apps/rdretrvl/apps/rsycn_lcd_test/daemon.pid

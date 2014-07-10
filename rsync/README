@@ -1,0 +1,108 @@
+This is the README file for the rx_rsync program.
+
+Overview
+--------
+usage: python ./rx_rsync
+
+Rsyncs the files structures in settings.py to the archive server.  After completion of the rsync, files over n days
+old are compressed to reduce storage requirements.
+
+Files
+---------
+rx_rsync.py
+    The code file.
+    
+    
+settings.py
+    This contains configuration information that will infrequently change.
+    It is imported by rx_rsync.py.
+    
+    # Perform an rsync dry run where you log the events but do not
+    # actually transfer the files.
+    DRY_RUN = False
+
+    # The lock file acts as a sempahore to tell the program that there is
+    # already an rsync in process.  If there was a failure, you will want
+    # to set this to true before the next invocation to insure that no
+    # invalid lock files are on disk.
+    DELETE_LOCKFILE = True
+
+    # Debug logging
+    DEBUG = True
+
+    # Compress any files older than this.
+    AGING_DAYS_FOR_COMPRESSION=61
+
+    # The source of the files we are rsyncing.
+    SSH_PORT = 22
+    LOG_FILE = 'rsync.log'
+    RSYNC_STDOUT = 'rsync_stdout.log' # file for stdout
+    RSYNC_STDERR =  'rsync_stderr.log' # file for stderr
+    LOCK_FILE = 'rsync.lock'
+    RSYNC_BIN = '/usr/bin/rsync'
+
+    # The base of the remote command to delete files more than n days old.
+    # The delfiles code is on the remote server.  We only specifiy the python
+    # interpretet and the main python file here.  There are two other command
+    # line arguments:  config_file log_file.
+    # Both of which must be in the same directory the delfiles.py.
+    #
+    # config_file = product_name + ".conf"
+    # log_file = product_name + ".log'
+    # Where name is the elemen in the ProductConf tuple for each product.
+    REMOTE_APP_DIR = '/local/apps/delfiles'
+    REMOTE_DELFILES_PROGRAM='delfiles.py'
+    REMOTE_PYTHON = '/usr/local/python26/bin/python'
+
+    # Named tuple that holds the configuration information for each product.
+    # name = unique identifier (e.g., ratings, research, etc)
+    # username = the username used to log into the remote system
+    # password = the password for an ssh connection
+    # remote_root = the remote directory from which to start the rsync
+    # local_root - the local directory to where the files are synced
+    ProductConf = collections.namedtuple('ProductConf',
+                                        'name, 
+                                        username, 
+                                        password, 
+                                        remote_root, local_root, 
+                                        exclude_dirs_file')
+    product_confs = []
+
+    # Each product will have its own process directory under the application
+    # directory with the same file names.
+    REMOTE_HOST='nj09mhf5006.edmz.mycompany.com'    
+    PACKAGE_PATH = '/net/151.108.224.74/fgr_arch/rx_archive/apps/pypackages'
+    base_dir = '/net/151.108.224.74/fgr_arch/rx_archive'
+    APPLICATION_DIR = os.path.join(base_dir, 'apps/rx_rsync')
+
+    product_confs.append(ProductConf._make(
+                        ['ratings',
+                        'myproduct_ftp',
+                        'w1lHelmmPff',
+                        '/raid/ftp/eris_ftp/eris_output/RX20',   
+        '/net/151.108.224.74/fgr_arch/rx_archive/raid/ftp/eris_ftp/eris_output/RX20',
+                        '/apps/rx_rsync/exclude_dirs']))
+    
+    ## RatingsResearch
+    product_confs.append(ProductConf._make(['researchratings',
+                                              'adp_ftp',
+                                              'adp_ftp',
+                                              '/raid/ftp/adp_ftp/rxcr/rating/',
+                '/net/151.108.224.74/fgr_arch/rx_archive/raid/ftp/adp_ftp/rxcr/ratings',
+                                              '/apps/rx_rsync/exclude_dirs']))
+
+    product_confs.append(ProductConf._make(['researchresearch',
+                                              'adp_ftp',
+                                              'adp_ftp',
+                                              '/raid/ftp/adp_ftp/rxcr/research/',
+            '/net/151.108.224.74/fgr_arch/rx_archive/raid/ftp/adp_ftp/rxcr/research',
+                                              '/apps/rx_rsync/exclude_dirs']))
+
+ex_dirs (exclude dirs)
+    File with the full path name of directories to be excluded from the rsync.  Normally,
+    this will include the ARCOS directory which is the branch used to store
+    archive files that are posted for clients on an as requested basis.
+    
+Any files that being with "test_" are unit test files and should not be deployed
+to production.
+

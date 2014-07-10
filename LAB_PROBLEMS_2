@@ -1,0 +1,31 @@
+2.1
+Given the list
+inl = [1 , 2, "a", "b", ("c", 3, "d"), ["e","f","g", 3.14], (["y", 4], ("z", 5))  ]
+
+write a function flatten() that returns the flattend list: 
+inl = [1 , 2, "a", "b", "c", 3, "d", "e","f","g", 3.14, "y", 4, "z", 5 ]
+
+2.2
+Write a function that outputs only the number in the fibonacci sequence that are divisible by 2.
+
+2.3
+Give an unsorted iterable of integers, if there are two unique elements of the 
+iterable, a and b, that sum to m then return True, else False.
+
+Example iterable: [1,17, 9, 100, 2, 14, 13]
+
+Example function: foo(iterable, target_number)
+Your function should be better than O(N^2)  i.e., quadratic
+
+2.4
+Write a decorator to automatically prime a coroutine.  Remember that coroutine needs to receive
+an initial next command to start.
+
+2.5
+Dynamic procedure
+
+2.6
+
+2.7
+Given a 3X3 row major matrix where each cell contains a unique integer, write a class that returns
+the sum of any rectangle in the matrix in O(1).

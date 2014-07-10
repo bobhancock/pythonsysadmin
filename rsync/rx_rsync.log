@@ -1,0 +1,21 @@
+2009-10-15 19:08:31,324:INFO:Program started
+2009-10-15 19:08:31,386:INFO:researchresearch: rsync() started
+2009-10-15 19:08:31,386:DEBUG:researchresearch: Verified existence of /raid/ftp/adp_ftp/rxcr/reserch
+2009-10-15 19:08:31,387:DEBUG:Created lock file
+2009-10-15 19:08:31,403:DEBUG:researchresearch: Opened /local/src/rx_rsync/trunk/researchresearch/rsync_stdout.log
+2009-10-15 19:08:31,403:DEBUG:cmdline_rsync=/usr/bin/rsync -avz --exclude-from=/apps/rx_rsync/exclude_dirs adp_ftp@poc2:/raid/ftp/adp_ftp/rxcr/research/ /raid/ftp/adp_ftp/rxcr/reserch
+2009-10-15 19:08:31,403:DEBUG:researchresearch: Before rsync /usr/bin/rsync -avz --exclude-from=/apps/rx_rsync/exclude_dirs adp_ftp@poc2:/raid/ftp/adp_ftp/rxcr/research/ /raid/ftp/adp_ftp/rxcr/reserch
+2009-10-15 19:08:31,406:DEBUG:researchresearch: Before: os.remove(lock_file)
+2009-10-15 19:08:31,406:DEBUG:researchresearch: After: os.remove(lock_file)
+2009-10-15 19:08:31,407:INFO:Elapsed time in seconds: 0.0827648639679
+2009-10-15 19:08:31,408:INFO:Shutdown complete
+2009-10-15 19:08:58,787:INFO:Program started
+2009-10-15 19:09:25,766:INFO:ratings: rsync() started
+2009-10-15 19:09:25,766:DEBUG:ratings: Verified existence of /raid/ftp/eris_ftp/eris_output/RX20
+2009-10-15 19:09:25,766:DEBUG:ratings: Added "/" to /raid/ftp/eris_ftp/eris_output/RX20/
+2009-10-15 19:09:25,766:DEBUG:Created lock file
+2009-10-15 19:09:25,767:DEBUG:ratings: Opened /local/src/rx_rsync/trunk/ratings/rsync_stdout.log
+2009-10-15 19:09:25,767:DEBUG:cmdline_rsync=/usr/bin/rsync -avz --exclude-from=/apps/rx_rsync/exclude_dirs eris_ftp@poc2:/raid/ftp/eris_ftp/eris_output/RX20/ /raid/ftp/eris_ftp/eris_output/RX20
+2009-10-15 19:09:25,767:DEBUG:ratings: Before rsync /usr/bin/rsync -avz --exclude-from=/apps/rx_rsync/exclude_dirs eris_ftp@poc2:/raid/ftp/eris_ftp/eris_output/RX20/ /raid/ftp/eris_ftp/eris_output/RX20
+2009-10-15 19:09:25,773:DEBUG:ratings: Before: os.remove(lock_file)
+2009-10-15 19:09:25,773:DEBUG:ratings: After: os.remove(lock_file)
